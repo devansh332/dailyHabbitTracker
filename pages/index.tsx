@@ -1,34 +1,15 @@
 import Head from "next/head";
-import Image from "next/image";
 import { Inter } from "@next/font/google";
-import styles from "../styles/Home.module.css";
 import { useEffect, useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
-  // this is home page for the habit tracker app
-  // home is the name of the page
-  // home contain a table of habits and a button to add a new habit
-  // home contain current date and a button to change the date to check previous habits
-  // every habit contain a checkbox to mark it as done or not
-  // habit contain score card to show how many times the habit is done in the current month
-  // habit contain a button to edit the habit
-  // habit contain a button to delete the habit
-  // habit contain a button to add a new habit
-  // all of this data is store in the local storage
-  // the data is store in the local storage as a json object
-  // the json object contain the date of the habit and the name of the habit
-
-  // if not window object is not available then return null
-
-  // load the habitJson key from the local storage
-
-  // create a state to store the habitJson
   const [habitJson, setHabitJson] = useState();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showNextDateButton, setShowNextDateButton] = useState(true);
   const [habitList, setHabitList] = useState();
+  const [habitScoreCard, setHabitScoreCard] = useState({});
 
   useEffect(() => {
     if (!localStorage.getItem("habitJson")) {
@@ -43,7 +24,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!localStorage.getItem("habitList")) {
-      console.log("comming here");
       localStorage.setItem("habitList", JSON.stringify([]));
     } else {
       const localHabitJson = localStorage.getItem("habitList");
@@ -55,13 +35,13 @@ export default function Home() {
 
   useEffect(() => {
     if (habitJson) {
-      localStorage.setItem("habitJson", JSON.stringify(habitJson));
+      localStorage.setItem("habitJson", JSON.stringify(habitJson as []));
     }
   }, [habitJson]);
 
   useEffect(() => {
     if (habitList) {
-      localStorage.setItem("habitList", JSON.stringify(habitList));
+      localStorage.setItem("habitList", JSON.stringify(habitList as []));
     }
   }, [habitList]);
   useEffect(() => {
@@ -73,9 +53,6 @@ export default function Home() {
   }, [selectedDate]);
 
   useEffect(() => {
-    // when selectedDate changes check if the date is present in the habitJson or not
-    // if not present then add the date to the habitJson and set the habitJson state
-    // add all habit list item missing from the selected date habit json
     if (habitJson && habitList) {
       if (!habitJson[selectedDate.toDateString()]) {
         const newHabitJson = {
@@ -91,7 +68,6 @@ export default function Home() {
         });
         setHabitJson(newHabitJson);
       } else {
-        // add all habit list item missing from the selected date habit json
         const newHabitJson = {
           ...habitJson,
           [selectedDate.toDateString()]: {
@@ -111,6 +87,23 @@ export default function Home() {
       }
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (habitJson && habitList) {
+      const newHabitScoreCard = {};
+      habitList.forEach((habit) => {
+        newHabitScoreCard[habit.habitId] = 0;
+      });
+      Object.keys(habitJson).forEach((date) => {
+        Object.keys(habitJson[date]).forEach((habitId) => {
+          if (habitJson[date][habitId].habitDone) {
+            newHabitScoreCard[habitId] += 1;
+          }
+        });
+      });
+      setHabitScoreCard(newHabitScoreCard);
+    }
+  }, [habitJson, habitList]);
 
   const addNewHabit = () => {
     const habitName = prompt("Enter the name of the habit");
@@ -186,11 +179,18 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <div className="h-screen w-full flex flex-col justify-center align-middle items-center">
-        {/* add date selector here */}
-        <div className="flex justify-center">
+      <div className="fixed bottom-20 right-5">
+        <button
+          className="border bg-blue-600 w-32 h-14 rounded-2xl text-white shadow-xl"
+          onClick={addNewHabit}
+        >
+          Add Habit
+        </button>
+      </div>
+      <div className="h-full w-full flex flex-col justify-around align-middle items-center p-4 bg-gray-100">
+        <div className="flex justify-around w-full">
           <button
+            className="border bg-blue-600 w-14 h-14 rounded-2xl text-white shadow-xl"
             onClick={() => {
               const newDate = new Date(selectedDate);
               newDate.setDate(newDate.getDate() - 1);
@@ -199,33 +199,35 @@ export default function Home() {
           >
             {"<"}
           </button>
-          <h1 className="text-2xl font-bold underline">
-            {selectedDate.toDateString()}
-          </h1>
-          {showNextDateButton && (
-            <button
-              onClick={() => {
-                const newDate = new Date(selectedDate);
-                newDate.setDate(newDate.getDate() + 1);
-                setSelectedDate(newDate);
-              }}
-            >
-              {">"}
-            </button>
-          )}
+          <div className="flex flex-col align-middle justify-center items-center px-4 shadow-lg rounded-xl">
+            <h1 className="text-2xl font-semibold text-blue-400   text-center ">
+              {selectedDate.toDateString()}
+            </h1>
+          </div>
+
+          <button
+            className={`border ${
+              showNextDateButton ? "bg-blue-600" : "bg-gray-400"
+            } w-14 h-14 rounded-2xl text-white shadow-xl`}
+            onClick={() => {
+              const newDate = new Date(selectedDate);
+              newDate.setDate(newDate.getDate() + 1);
+              setSelectedDate(newDate);
+            }}
+            disabled={!showNextDateButton}
+          >
+            {">"}
+          </button>
         </div>
-        {/* habbit app starts from here  */}
-        {/* this is the table of the habits */}
-        {/* use selected Date to find habit and render them  */}
-        <div className="flex justify-center">
-          <table className="table-auto">
+        <div className="flex justify-center p-4 shadow-lg w-full">
+          <table className="table-auto w-full">
             <thead>
-              <tr>
-                <th className="px-4 py-2">Habit Name</th>
-                <th className="px-4 py-2">Habit Done</th>
-                <th className="px-4 py-2">Habit Score</th>
-                <th className="px-4 py-2">Edit Habit</th>
-                <th className="px-4 py-2">Delete Habit</th>
+              <tr className="text-green-700">
+                <th className="px-4 py-2"> Name</th>
+                <th className="px-4 py-2"> Done</th>
+                {/* <th className="px-4 py-2"> Score</th> */}
+                <th className="px-4 py-2">Edit </th>
+                <th className="px-4 py-2">Delete </th>
               </tr>
             </thead>
             <tbody>
@@ -234,61 +236,106 @@ export default function Home() {
                   if (habitDate === selectedDate.toDateString()) {
                     return Object.keys(habitJson[habitDate]).map((habitId) => {
                       return (
-                        <tr key={habitId}>
-                          <td className="border px-4 py-2">
-                            {/* get name from habit list based on habit id  */}
-                            {habitList.map((habit) => {
-                              if (habit.habitId == habitId) {
-                                return habit.habitName;
-                              }
-                            })}
-                          </td>
-                          <td className="border px-4 py-2">
-                            <input
-                              type="checkbox"
-                              checked={habitJson[habitDate][habitId].habitDone}
-                              onChange={(e) => {
-                                toggleHabitDone(
-                                  habitJson[habitDate][habitId].habitId
-                                );
-                              }}
-                            />
-                          </td>
-                          <td className="border px-4 py-2">
-                            {habitJson[habitDate][habitId].habitScore}
-                          </td>
-                          <td className="border px-4 py-2">
-                            <button
-                              onClick={() => {
-                                editHabit(
-                                  habitJson[habitDate][habitId].habitId
-                                );
-                              }}
-                            >
-                              Edit Habit
-                            </button>
-                          </td>
-                          <td className="border px-4 py-2">
-                            <button
-                              onClick={() => {
-                                const newHabitJson = { ...habitJson };
-                                delete newHabitJson[habitDate][habitId];
-                                setHabitJson(newHabitJson);
-                              }}
-                            >
-                              Delete Habit
-                            </button>
-                          </td>
-                        </tr>
+                        <>
+                          <tr key={habitId}>
+                            <td className="border-4 px-4 py-2 text-ellipsis break-words max-w-0">
+                              {/* get name from habit list based on habit id  */}
+                              {habitList.map((habit) => {
+                                if (habit.habitId == habitId) {
+                                  return habit.habitName;
+                                }
+                              })}
+                            </td>
+                            <td className="border-4 px-4 py-2">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  habitJson[habitDate][habitId].habitDone
+                                }
+                                onChange={(e) => {
+                                  toggleHabitDone(
+                                    habitJson[habitDate][habitId].habitId
+                                  );
+                                }}
+                              />
+                            </td>
+                            {/* <td className="border-4 px-4 py-2">
+                              {habitJson[habitDate][habitId].habitScore}
+                            </td> */}
+                            <td className="border-4 px-4 py-2">
+                              <button
+                                onClick={() => {
+                                  editHabit(
+                                    habitJson[habitDate][habitId].habitId
+                                  );
+                                }}
+                              >
+                                Edit
+                              </button>
+                            </td>
+                            <td className="border-4 px-4 py-2">
+                              <button
+                                onClick={() => {
+                                  const newHabitJson = { ...habitJson };
+                                  delete newHabitJson[habitDate][habitId];
+                                  setHabitJson(newHabitJson);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        </>
                       );
                     });
                   }
                 })}
             </tbody>
           </table>
-          <div>
-            <button onClick={addNewHabit}>Add Habit</button>
+        </div>
+        {/* add habit Score card */}
+        <div className="flex justify-center mt-4">
+          <div className="">
+            <div className="bg-gray-200 rounded-lg shadow-lg p-4">
+              <div className="flex justify-between">
+                <div className="flex">
+                  <div className="flex flex-col">
+                    <h1 className="text-xl font-bold">Habit Score</h1>
+                    <p className="text-sm text-gray-500">
+                      {selectedDate.toDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+        <div className="flex flex-wrap gap-3 mt-6 ">
+          {habitScoreCard &&
+            Object.keys(habitScoreCard).map((habitId) => {
+              return (
+                <div key={habitId} className="">
+                  <div className="bg-gray-200 rounded-lg shadow-lg p-4">
+                    <div className="flex justify-between">
+                      <div className="flex">
+                        <div className="flex flex-col">
+                          <h1 className="text-xl font-bold">
+                            {habitList.map((habit) => {
+                              if (habit.habitId == habitId) {
+                                return habit.habitName;
+                              }
+                            })}
+                          </h1>
+                          <p className="text-sm text-gray-500">
+                            {habitScoreCard[habitId]}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
     </>
