@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { Inter } from "@next/font/google";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,6 +11,7 @@ export default function Home() {
   const [showNextDateButton, setShowNextDateButton] = useState(true);
   const [habitList, setHabitList] = useState();
   const [habitScoreCard, setHabitScoreCard] = useState({});
+  const [showDancingEmoji, setShowDancingEmoji] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem("habitJson")) {
@@ -21,6 +23,19 @@ export default function Home() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    // set showDancingEmoji to false after 5 seconds
+    if (!showDancingEmoji) {
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setShowDancingEmoji(false);
+    }, 5000);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [showDancingEmoji]);
 
   useEffect(() => {
     if (!localStorage.getItem("habitList")) {
@@ -89,6 +104,18 @@ export default function Home() {
   }, [selectedDate]);
 
   useEffect(() => {
+    if (habitJson) {
+      const isAllTaskDone = checkIfAllHabitDoneForToday();
+      console.log(isAllTaskDone, "isAllTaskDone");
+      if (isAllTaskDone) {
+        setShowDancingEmoji(true);
+      } else {
+        setShowDancingEmoji(false);
+      }
+    }
+  }, [habitJson]);
+
+  useEffect(() => {
     if (habitJson && habitList) {
       const newHabitScoreCard = {};
       habitList.forEach((habit) => {
@@ -146,6 +173,16 @@ export default function Home() {
       setHabitList(newHabitList);
     }
   };
+  const checkIfAllHabitDoneForToday = () => {
+    let allHabitDone = true;
+    Object.keys(habitJson[selectedDate.toDateString()]).forEach((habitId) => {
+      console.log(habitJson[selectedDate.toDateString()][habitId]);
+      if (!habitJson[selectedDate.toDateString()][habitId].habitDone) {
+        allHabitDone = false;
+      }
+    });
+    return allHabitDone;
+  };
   const toggleHabitDone = (habitId) => {
     const newHabitJson = {
       ...habitJson,
@@ -179,6 +216,15 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      {showDancingEmoji && (
+        <div className="fixed top-0 left-0 h-full w-full flex justify-center items-center">
+          <div className="animate-bounce">
+            <span role="img" aria-label="dancing emoji">
+              <Image src="/dancingLady.gif" width={300} height={300} alt="" />
+            </span>
+          </div>
+        </div>
+      )}
       <div className="fixed bottom-20 right-5">
         <button
           className="border bg-blue-600 w-32 h-14 rounded-2xl text-white shadow-xl"
