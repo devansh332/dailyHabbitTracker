@@ -237,7 +237,14 @@ export default function Home() {
                     return Object.keys(habitJson[habitDate]).map((habitId) => {
                       return (
                         <>
-                          <tr key={habitId}>
+                          <tr
+                            key={habitId}
+                            className={`${
+                              habitJson[habitDate][habitId].habitDone
+                                ? "bg-green-300"
+                                : ""
+                            }`}
+                          >
                             <td className="border-4 px-4 py-2 text-ellipsis break-words max-w-0">
                               {/* get name from habit list based on habit id  */}
                               {habitList.map((habit) => {
@@ -257,6 +264,7 @@ export default function Home() {
                                     habitJson[habitDate][habitId].habitId
                                   );
                                 }}
+                                className="w-6 h-6 text-green-600 border-0 rounded-full focus:ring-0"
                               />
                             </td>
                             {/* <td className="border-4 px-4 py-2">
@@ -315,7 +323,13 @@ export default function Home() {
             Object.keys(habitScoreCard).map((habitId) => {
               return (
                 <div key={habitId} className="">
-                  <div className="bg-gray-200 rounded-lg shadow-lg p-4">
+                  <div
+                    className={`${
+                      habitScoreCard[habitId] > 0
+                        ? "bg-green-300"
+                        : "bg-gray-200"
+                    } rounded-lg shadow-lg p-4`}
+                  >
                     <div className="flex justify-between">
                       <div className="flex">
                         <div className="flex flex-col">
@@ -326,7 +340,7 @@ export default function Home() {
                               }
                             })}
                           </h1>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-3xl text-gray-500">
                             {habitScoreCard[habitId]}
                           </p>
                         </div>
