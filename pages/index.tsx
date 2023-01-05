@@ -196,8 +196,9 @@ export default function Home() {
     }
   };
   const checkIfAllHabitDoneForToday = () => {
-    let allHabitDone = true;
+    let allHabitDone = false;
     if (habitJson && habitJson[selectedDate.toDateString()]) {
+      allHabitDone = true;
       Object.keys(habitJson[selectedDate.toDateString()]).forEach((habitId) => {
         console.log(habitJson[selectedDate.toDateString()][habitId]);
         if (!habitJson[selectedDate.toDateString()][habitId].habitDone) {
