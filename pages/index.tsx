@@ -5,12 +5,34 @@ import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// create type for habitJson and habitList
+type HabitJson = {
+  [key: string]: {
+    [key: string]: {
+      habitId: number;
+      habitName: string;
+      habitDone: boolean;
+      habitScore: number;
+    };
+  };
+};
+
+type HabitList = {
+  habitId: number;
+  habitName: string;
+};
+
+// type of habitScoreCard
+type HabitScoreCard = {
+  [key: string]: number;
+};
+
 export default function Home() {
-  const [habitJson, setHabitJson] = useState();
+  const [habitJson, setHabitJson] = useState<HabitJson | null>();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showNextDateButton, setShowNextDateButton] = useState(true);
-  const [habitList, setHabitList] = useState();
-  const [habitScoreCard, setHabitScoreCard] = useState({});
+  const [habitList, setHabitList] = useState<HabitList[] | null>();
+  const [habitScoreCard, setHabitScoreCard] = useState<HabitScoreCard | null>();
   const [showDancingEmoji, setShowDancingEmoji] = useState(false);
 
   useEffect(() => {
@@ -50,13 +72,13 @@ export default function Home() {
 
   useEffect(() => {
     if (habitJson) {
-      localStorage.setItem("habitJson", JSON.stringify(habitJson as []));
+      localStorage.setItem("habitJson", JSON.stringify(habitJson));
     }
   }, [habitJson]);
 
   useEffect(() => {
     if (habitList) {
-      localStorage.setItem("habitList", JSON.stringify(habitList as []));
+      localStorage.setItem("habitList", JSON.stringify(habitList));
     }
   }, [habitList]);
   useEffect(() => {
@@ -117,8 +139,8 @@ export default function Home() {
 
   useEffect(() => {
     if (habitJson && habitList) {
-      const newHabitScoreCard = {};
-      habitList.forEach((habit) => {
+      const newHabitScoreCard = {} as HabitScoreCard;
+      habitList.forEach((habit: HabitList) => {
         newHabitScoreCard[habit.habitId] = 0;
       });
       Object.keys(habitJson).forEach((date) => {
@@ -134,7 +156,7 @@ export default function Home() {
 
   const addNewHabit = () => {
     const habitName = prompt("Enter the name of the habit");
-    if (habitName) {
+    if (habitName && habitList && habitJson) {
       const newHabit = {
         habitId: Math.random(),
         habitName,
@@ -150,9 +172,9 @@ export default function Home() {
       setHabitList([...habitList, newHabit]);
     }
   };
-  const editHabit = (habitId) => {
+  const editHabit = (habitId: string) => {
     const habitName = prompt("Enter the name of the habit");
-    if (habitName) {
+    if (habitName && habitList && habitJson) {
       const newHabitJson = {
         ...habitJson,
         [selectedDate.toDateString()]: {
@@ -164,8 +186,8 @@ export default function Home() {
         },
       };
       setHabitJson(newHabitJson);
-      const newHabitList = habitList.map((habit) => {
-        if (habit.habitId === habitId) {
+      const newHabitList = habitList.map((habit: HabitList) => {
+        if (habit.habitId.toString() === habitId) {
           return { ...habit, habitName };
         }
         return habit;
@@ -175,38 +197,47 @@ export default function Home() {
   };
   const checkIfAllHabitDoneForToday = () => {
     let allHabitDone = true;
-    Object.keys(habitJson[selectedDate.toDateString()]).forEach((habitId) => {
-      console.log(habitJson[selectedDate.toDateString()][habitId]);
-      if (!habitJson[selectedDate.toDateString()][habitId].habitDone) {
-        allHabitDone = false;
-      }
-    });
+    if (habitJson && habitJson[selectedDate.toDateString()]) {
+      Object.keys(habitJson[selectedDate.toDateString()]).forEach((habitId) => {
+        console.log(habitJson[selectedDate.toDateString()][habitId]);
+        if (!habitJson[selectedDate.toDateString()][habitId].habitDone) {
+          allHabitDone = false;
+        }
+      });
+    }
     return allHabitDone;
   };
-  const toggleHabitDone = (habitId) => {
-    const newHabitJson = {
-      ...habitJson,
-      [selectedDate.toDateString()]: {
-        ...habitJson[selectedDate.toDateString()],
-        [habitId]: {
-          ...habitJson[selectedDate.toDateString()][habitId],
-          habitDone: !habitJson[selectedDate.toDateString()][habitId].habitDone,
+  const toggleHabitDone = (habitId: string) => {
+    if (habitId && habitList && habitJson) {
+      const newHabitJson = {
+        ...habitJson,
+        [selectedDate.toDateString()]: {
+          ...habitJson[selectedDate.toDateString()],
+          [habitId]: {
+            ...habitJson[selectedDate.toDateString()][habitId],
+            habitDone:
+              !habitJson[selectedDate.toDateString()][habitId].habitDone,
+          },
         },
-      },
-    };
-    setHabitJson(newHabitJson);
+      };
+      setHabitJson(newHabitJson);
+    }
   };
-  const deleteHabit = (habitId) => {
-    const newHabitJson = {
-      ...habitJson,
-      [selectedDate.toDateString()]: {
-        ...habitJson[selectedDate.toDateString()],
-      },
-    };
-    delete newHabitJson[selectedDate.toDateString()][habitId];
-    setHabitJson(newHabitJson);
-    const newHabitList = habitList.filter((habit) => habit.habitId !== habitId);
-    setHabitList(newHabitList);
+  const deleteHabit = (habitId: string) => {
+    if (habitId && habitList && habitJson) {
+      const newHabitJson = {
+        ...habitJson,
+        [selectedDate.toDateString()]: {
+          ...habitJson[selectedDate.toDateString()],
+        },
+      };
+      delete newHabitJson[selectedDate.toDateString()][habitId];
+      setHabitJson(newHabitJson);
+      const newHabitList = habitList.filter(
+        (habit) => habit.habitId.toString() !== habitId
+      );
+      setHabitList(newHabitList);
+    }
   };
   return (
     <>
@@ -293,11 +324,12 @@ export default function Home() {
                           >
                             <td className="border-4 px-4 py-2 text-ellipsis break-words max-w-0">
                               {/* get name from habit list based on habit id  */}
-                              {habitList.map((habit) => {
-                                if (habit.habitId == habitId) {
-                                  return habit.habitName;
-                                }
-                              })}
+                              {habitList &&
+                                habitList.map((habit) => {
+                                  if (habit.habitId.toString() == habitId) {
+                                    return habit.habitName;
+                                  }
+                                })}
                             </td>
                             <td className="border-4 px-4 py-2">
                               <input
@@ -307,7 +339,9 @@ export default function Home() {
                                 }
                                 onChange={(e) => {
                                   toggleHabitDone(
-                                    habitJson[habitDate][habitId].habitId
+                                    habitJson[habitDate][
+                                      habitId
+                                    ].habitId.toString()
                                   );
                                 }}
                                 className="w-6 h-6 text-green-600 border-0 rounded-full focus:ring-0"
@@ -320,7 +354,9 @@ export default function Home() {
                               <button
                                 onClick={() => {
                                   editHabit(
-                                    habitJson[habitDate][habitId].habitId
+                                    habitJson[habitDate][
+                                      habitId
+                                    ].habitId.toString()
                                   );
                                 }}
                               >
@@ -330,9 +366,11 @@ export default function Home() {
                             <td className="border-4 px-4 py-2">
                               <button
                                 onClick={() => {
-                                  const newHabitJson = { ...habitJson };
-                                  delete newHabitJson[habitDate][habitId];
-                                  setHabitJson(newHabitJson);
+                                  deleteHabit(
+                                    habitJson[habitDate][
+                                      habitId
+                                    ].habitId.toString()
+                                  );
                                 }}
                               >
                                 Delete
@@ -366,7 +404,7 @@ export default function Home() {
         </div>
         <div className="flex flex-wrap gap-3 mt-6 ">
           {habitScoreCard &&
-            Object.keys(habitScoreCard).map((habitId) => {
+            Object.keys(habitScoreCard).map((habitId: string) => {
               return (
                 <div key={habitId} className="">
                   <div
@@ -380,11 +418,12 @@ export default function Home() {
                       <div className="flex">
                         <div className="flex flex-col">
                           <h1 className="text-xl font-bold">
-                            {habitList.map((habit) => {
-                              if (habit.habitId == habitId) {
-                                return habit.habitName;
-                              }
-                            })}
+                            {habitList &&
+                              habitList.map((habit) => {
+                                if (habit.habitId.toString() == habitId) {
+                                  return habit.habitName;
+                                }
+                              })}
                           </h1>
                           <p className="text-3xl text-gray-500">
                             {habitScoreCard[habitId]}
